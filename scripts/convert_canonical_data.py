@@ -444,6 +444,11 @@ def main() -> None:
     parser.add_argument("--overwrite", action="store_true", help="Replace a non-empty output directory.")
     args = parser.parse_args()
 
+    raw_root = args.raw_root.resolve()
+    output_dir = args.output_dir.resolve()
+    if raw_root.is_relative_to(output_dir) or output_dir.is_relative_to(raw_root):
+        parser.error("raw_root and output_dir must not overlap; choose separate dataset directories")
+
     if args.robot != "aloha" and args.aloha_action_space != "eef":
         parser.error("--aloha-action-space is only supported for --robot aloha")
     action_space_is_eef = args.robot == "flexiv" or (args.robot == "aloha" and args.aloha_action_space == "eef")
@@ -687,3 +692,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
