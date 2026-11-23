@@ -5,6 +5,11 @@
 <p><b>Scaling Vision-Tactile-Language-Action Model with Latent Tactile Tokens</b></p>
 
 <p>
+  <a href="https://research.neoteai.com/">NeoteAI Team · <strong>新智具身</strong></a>
+  &amp; <a href="https://teai.fudan.edu.cn/">Fudan TEAI Team</a>
+</p>
+
+<p>
   <b>English</b> &nbsp;·&nbsp; <a href="README_CN.md">中文</a>
 </p>
 
