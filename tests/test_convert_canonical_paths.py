@@ -48,7 +48,16 @@ def make_episode(raw):
 
 
 def snapshot(root):
-    return {str(path.relative_to(root)): path.read_bytes() for path in root.rglob('*') if path.is_file()}
+    entries = {}
+    for path in root.rglob('*'):
+        if path.is_symlink():
+            value = ('symlink', os.readlink(path))
+        elif path.is_dir():
+            value = ('directory',)
+        else:
+            value = ('file', path.read_bytes())
+        entries[str(path.relative_to(root))] = value
+    return entries
 
 
 def run_conversion(raw, output, overwrite=False):
@@ -58,10 +67,14 @@ def run_conversion(raw, output, overwrite=False):
     return subprocess.run(command, capture_output=True, text=True, timeout=30)
 
 
-@pytest.mark.parametrize('relation', ['same', 'ancestor', 'descendant', 'symlink_same', 'symlink_ancestor'])
+@pytest.mark.parametrize('relation', [
+    'same', 'ancestor', 'descendant', 'new_descendant',
+    'symlink_same', 'symlink_ancestor',
+    'case_same', 'case_ancestor', 'case_new_descendant',
+])
 @pytest.mark.parametrize('overwrite', [False, True])
 def test_overlapping_directories_preserve_every_source_byte(tmp_path, relation, overwrite):
-    raw = tmp_path / 'dataset' / 'raw'
+    raw = tmp_path / 'Dataset' / 'RawCase'
     make_episode(raw)
     if relation == 'same':
         output = raw
@@ -69,6 +82,14 @@ def test_overlapping_directories_preserve_every_source_byte(tmp_path, relation, 
         output = raw.parent
     elif relation == 'descendant':
         output = raw / 'episode_000000'
+    elif relation == 'new_descendant':
+        output = raw / 'not-yet-existing'
+    elif relation.startswith('case_'):
+        target = raw.parent if relation == 'case_ancestor' else raw
+        alias = target.with_name(target.name.swapcase())
+        if not alias.exists() or not alias.samefile(target):
+            pytest.skip('requires case-insensitive path lookup')
+        output = alias / 'not-yet-existing' if relation == 'case_new_descendant' else alias
     else:
         output = tmp_path / 'alias'
         output.symlink_to(raw if relation == 'symlink_same' else raw.parent, target_is_directory=True)
@@ -77,6 +98,8 @@ def test_overlapping_directories_preserve_every_source_byte(tmp_path, relation, 
     assert snapshot(raw) == before
     assert result.returncode == 2, result.stdout + result.stderr
     assert 'must not overlap' in result.stderr
+    if relation in ('new_descendant', 'case_new_descendant'):
+        assert not output.exists()
 
 
 def test_sibling_conversion_produces_parquet_and_preserves_source(tmp_path):
