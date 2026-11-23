@@ -5,6 +5,11 @@
 <p><b>用潜在触觉 Token 扩展视觉-触觉-语言-动作模型</b></p>
 
 <p>
+  <a href="https://research.neoteai.com/">NeoteAI Team · <strong>新智具身</strong></a>
+  &amp; <a href="https://teai.fudan.edu.cn/">Fudan TEAI Team</a>
+</p>
+
+<p>
   <a href="README.md">English</a> &nbsp;·&nbsp; <b>中文</b>
 </p>
 
