@@ -93,6 +93,12 @@ assets/vtla_tactile_posttrain/<asset-id>/norm_stats.json
 `--max-frames` can be used for a pipeline smoke test, but final statistics should be computed
 over the full training set.
 
+The normalization script rejects state/action columns that are not 32-dimensional numeric
+vectors or contain NaN, infinity, or null values. List elements must have an integer or
+floating-point Arrow type; numeric strings and booleans are rejected. The error identifies the Parquet file and
+column; repair the source data before recomputing statistics. Validation failures leave any
+existing normalization asset unchanged.
+
 ### 3. Configure post-training
 
 The reference config reads local paths from environment variables:
