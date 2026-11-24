@@ -124,6 +124,15 @@ bash train.sh --overwrite
 转换 episode、计算归一化统计、配置、训练这四步的完整说明，连同 canonical 32 维布局和常见问题，
 都在 [POST_TRAINING.md](docs/POST_TRAINING.md)。
 
+## Lift Can 复现提醒
+
+> **评测 `n0_VTLA_univtac_single8` 前，请核对腕部相机配置。** UniVTAC `695a22d`
+> 会无条件额外倾斜腕部相机 −30°，并把焦距设为 `1.3`；原始视角不做这次额外倾斜，焦距为 `1.94`。
+> 使用原始视角时，须先应用
+> [相机开关修复](https://github.com/anlorla/UniVTAC/commit/eedc61dc078e496082b69667c118710f842fbc73)，
+> 再在**仿真进程**中设置 `UNIVTAC_LIFT_CAN_FIXEDCAM=0`。仅在未经修改的 `695a22d` 上设置该变量不会生效。
+> 详见[配置说明及两种视角示例](docs/LIFT_CAN_REPRODUCTION.md)。
+
 ## 推理服务
 
 ```bash

@@ -134,6 +134,16 @@ bash train.sh --overwrite
 normalization statistics, configure, train), along with the canonical 32-dim layout and a
 troubleshooting section.
 
+## Lift Can reproduction note
+
+> **Check the wrist-camera configuration before evaluating `n0_VTLA_univtac_single8`.**
+> UniVTAC `695a22d` unconditionally adds a −30° wrist-camera tilt and sets focal length to
+> `1.3`. The original view uses focal length `1.94` without that additional tilt. Apply the
+> [camera-switch fix](https://github.com/anlorla/UniVTAC/commit/eedc61dc078e496082b69667c118710f842fbc73)
+> before setting `UNIVTAC_LIFT_CAN_FIXEDCAM=0` in the **simulator** process; the variable has
+> no effect on an unmodified `695a22d` checkout. See the
+> [configuration guide and example views](docs/LIFT_CAN_REPRODUCTION.md).
+
 ## Serving
 
 ```bash

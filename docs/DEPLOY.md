@@ -11,6 +11,11 @@ prefix-cache equivalence, and model compatibility.
 
 ## Serving
 
+For the `n0_VTLA_univtac_single8` checkpoint on **Lift Can**, first read the
+[wrist-camera compatibility note](LIFT_CAN_REPRODUCTION.md). UniVTAC `695a22d` changes the
+camera unconditionally; setting `UNIVTAC_LIFT_CAN_FIXEDCAM=0` requires the upstream camera-switch
+fix and must apply to the simulator process.
+
 ```bash
 python scripts/serve_policy.py \
   --policy.config=vtla_tactile_posttrain \
