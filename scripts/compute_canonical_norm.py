@@ -21,6 +21,7 @@ import logging
 from pathlib import Path
 
 import numpy as np
+import pyarrow as pa
 import pyarrow.parquet as pq
 
 
@@ -144,7 +145,24 @@ class RunningStats:
 
 
 def read_fixed_list(table, name: str) -> np.ndarray:
-    return np.asarray(table[name].to_pylist(), dtype=np.float32)
+    column_type = table.schema.field(name).type
+    if not (
+        pa.types.is_list(column_type)
+        or pa.types.is_large_list(column_type)
+        or pa.types.is_fixed_size_list(column_type)
+    ) or not (
+        pa.types.is_integer(column_type.value_type) or pa.types.is_floating(column_type.value_type)
+    ):
+        raise ValueError(f"{name}: expected a list of integer or floating-point values, got {column_type}")
+    try:
+        values = np.asarray(table[name].to_pylist(), dtype=np.float32)
+    except (TypeError, ValueError) as exc:
+        raise ValueError(f"{name}: expected rows of 32 numeric values") from exc
+    if values.ndim != 2 or values.shape[1] != 32:
+        raise ValueError(f"{name}: expected shape (frames, 32), got {values.shape}")
+    if not np.isfinite(values).all():
+        raise ValueError(f"{name}: contains non-finite values (NaN, infinity, or null)")
+    return values
 
 
 def action_horizon_sequence(actions: np.ndarray, horizon: int = ACTION_HORIZON) -> np.ndarray:
@@ -173,9 +191,12 @@ def compute(spec: dict, max_frames: int | None) -> tuple[dict, int]:
     processed = 0
 
     for parquet_path in sorted((repo / "data").rglob("*.parquet")):
-        table = pq.read_table(parquet_path, columns=["observation.state", "action"])
-        state = read_fixed_list(table, "observation.state")
-        action = read_fixed_list(table, "action")
+        try:
+            table = pq.read_table(parquet_path, columns=["observation.state", "action"])
+            state = read_fixed_list(table, "observation.state")
+            action = read_fixed_list(table, "action")
+        except (pa.ArrowException, ValueError) as exc:
+            raise ValueError(f"{parquet_path}: {exc}") from exc
 
         if max_frames is not None:
             remaining = max_frames - processed
@@ -236,7 +257,7 @@ def main() -> None:
     output_dir = repo_root / "assets" / train_config_name / spec["asset_id"]
     output_dir.mkdir(parents=True, exist_ok=True)
     output_path = output_dir / "norm_stats.json"
-    output_path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    output_path.write_text(json.dumps(payload, indent=2, allow_nan=False) + "\n", encoding="utf-8")
     print(f"Processed frames: {processed}")
     print(f"Writing stats to: {output_path}")
 
