@@ -159,6 +159,21 @@ def _array_from_aliases(
     return values
 
 
+def _paths_overlap(first: Path, second: Path) -> bool:
+    first, second = first.resolve(), second.resolve()
+    if first.is_relative_to(second) or second.is_relative_to(first):
+        return True
+    # resolve() does not canonicalize case on case-insensitive filesystems.
+    # Compare existing ancestors by identity, including for a new output path.
+    for root, other in ((first, second), (second, first)):
+        if not root.exists():
+            continue
+        for ancestor in (other, *other.parents):
+            if ancestor.exists() and root.samefile(ancestor):
+                return True
+    return False
+
+
 def _reset_output_dir(path: Path, *, overwrite: bool) -> None:
     if path.exists():
         if any(path.iterdir()) and not overwrite:
@@ -444,6 +459,9 @@ def main() -> None:
     parser.add_argument("--overwrite", action="store_true", help="Replace a non-empty output directory.")
     args = parser.parse_args()
 
+    if _paths_overlap(args.raw_root, args.output_dir):
+        parser.error("raw_root and output_dir must not overlap; choose separate dataset directories")
+
     if args.robot != "aloha" and args.aloha_action_space != "eef":
         parser.error("--aloha-action-space is only supported for --robot aloha")
     action_space_is_eef = args.robot == "flexiv" or (args.robot == "aloha" and args.aloha_action_space == "eef")
@@ -687,3 +705,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
